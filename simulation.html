@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Agent-Based Complex System Simulation</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="simulation-canvas" width="1200" height="800"></canvas>
+
+  <script>
+    // Simulation parameters
+    const gridSize = 60;
+    const numAgents = 3000;
+    const agentSize = 3;
+    const agentSpeed = 1.5;
+    const objectSize = 10;
+
+    // Create agents with dispersed initial positions
+    const agents = [];
+    for (let i = 0; i < numAgents; i++) {
+      const agent = {
+        x: Math.random() * gridSize,
+        y: Math.random() * gridSize,
+        vx: (Math.random() - 0.5) * agentSpeed,
+        vy: (Math.random() - 0.5) * agentSpeed,
+      };
+      agents.push(agent);
+    }
+
+    // Create objects with dispersed random positions
+    const objects = [];
+    const numObjects = numAgents * 2;
+    for (let i = 0; i < numObjects; i++) {
+      let object;
+      do {
+        object = {
+          x: Math.random() * gridSize,
+          y: Math.random() * gridSize,
+        };
+      } while (
+        objects.some(
+          (obj) =>
+            Math.abs(obj.x - object.x) < objectSize / gridSize &&
+            Math.abs(obj.y - object.y) < objectSize / gridSize
+        )
+      );
+      objects.push(object);
+    }
+
+    // Function to check collision between an agent and an object
+    function checkCollision(agent, object) {
+      const agentX = agent.x * gridSize + agentSize / 2;
+      const agentY = agent.y * gridSize + agentSize / 2;
+      const objectX = object.x * gridSize + objectSize / 2;
+      const objectY = object.y * gridSize + objectSize / 2;
+
+      const distance = Math.sqrt(
+        Math.pow(agentX - objectX, 2) + Math.pow(agentY - objectY, 2)
+      );
+
+      return distance < (agentSize + objectSize) / 2;
+    }
+
+    // Get the canvas element and its context
+    const canvas = document.getElementById('simulation-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Function to draw agents and objects on the canvas
+    function drawAgentsAndObjects() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'red';
+      for (const object of objects) {
+        const x = object.x * gridSize;
+        const y = object.y * gridSize;
+        ctx.fillRect(x, y, objectSize, objectSize);
+      }
+
+      ctx.fillStyle = 'blue';
+      for (const agent of agents) {
+        const x = agent.x * gridSize;
+        const y = agent.y * gridSize;
+        ctx.fillRect(x, y, agentSize, agentSize);
+      }
+    }
+
+    // Function to update agent positions
+    function updateAgents() {
+      for (const agent of agents) {
+        agent.x += agent.vx;
+        agent.y += agent.vy;
+
+        // Wrap agent position around the grid
+        agent.x = (agent.x + gridSize) % gridSize;
+        agent.y = (agent.y + gridSize) % gridSize;
+
+        // Check agent-object interactions
+        for (const object of objects) {
+          if (checkCollision(agent, object)) {
+            agent.vx = -agent.vx;
+            agent.vy = -agent.vy;
+            break;
+          }
+        }
+      }
+    }
+
+    // Function to animate the simulation
+    function animate() {
+      drawAgentsAndObjects();
+      updateAgents();
+      requestAnimationFrame(animate);
+    }
+
+    // Start the simulation
+    animate();
+  </script>
+</body>
+
+</html>
